@@ -1,6 +1,6 @@
 module github.com/viswesr/gq
 
-go 1.21.0
+go 1.20
 
 require github.com/PuerkitoBio/goquery v1.9.2
 
