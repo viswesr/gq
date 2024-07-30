@@ -16,7 +16,7 @@ func main() {
 	flag.Parse()
 
 	if *fileFlag == "" || *queryFlag == "" {
-		fmt.Println("Usage: go run main.go -file=<html_file> -query=<query>")
+		fmt.Println("Usage: go run main.go -file=<html_file> -query=<query eg:Find a|Each{Attrib href}>")
 		os.Exit(1)
 	}
 
