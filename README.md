@@ -7,7 +7,7 @@
 To install `gq`, make sure you have Go installed on your system, then run:
 
 ```
-go get github.com/viswesr/gq
+go install github.com/viswesr/gq@latest
 ```
 
 ## Usage
