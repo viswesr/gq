@@ -91,17 +91,12 @@ Find <selector>|<command1>|<command2>|...
    Find form.login|Find button|Each{Attrib data-id}
    ```
 
-5. Get the text of all h2 headers, followed by the text of the immediately following paragraph:
-   ```
-   Find h2|Each{Text|Find + p|Text}
-   ```
-
-6. Get the href of all links within the nav element, along with their text:
+5. Get the href of all links within the nav element, along with their text:
    ```
    Find nav a|Each{Attrib href|Text}
    ```
 
-7. Get the source of all iframes, along with their width and height:
+6. Get the source of all iframes, along with their width and height:
    ```
    Find iframe|Each{Attrib src|Attrib width|Attrib height}
    ```
