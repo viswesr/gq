@@ -14,7 +14,13 @@ import (
 func main() {
 	fileFlag := flag.String("file", "", "HTML file to parse")
 	queryFlag := flag.String("query", "", "Query to execute")
+	codeGenFlag := flag.Bool("gencode", false, "Generate Go code snippet for the query")
 	flag.Parse()
+
+	if *codeGenFlag {
+		generateGoCode(*fileFlag, *queryFlag)
+		return
+	}
 
 	if *fileFlag == "" || *queryFlag == "" {
 		fmt.Println("Usage: gq -file=<html_file> -query=<query eg:Find a|Each{Attrib href}>")
@@ -133,6 +139,105 @@ func parseParts(query string) []string {
 	}
 
 	return parts
+}
+
+func generateGoCode(file, query string) {
+	fmt.Println("package main")
+	fmt.Println()
+	fmt.Println("import (")
+	fmt.Println("\t\"fmt\"")
+	fmt.Println("\t\"log\"")
+	if strings.HasPrefix(file, "http:") || strings.HasPrefix(file, "https:") {
+		fmt.Println("\t\"net/http\"")
+	} else {
+		fmt.Println("\t\"os\"")
+	}
+	fmt.Println("\t\"github.com/PuerkitoBio/goquery\"")
+	fmt.Println(")")
+	fmt.Println()
+	fmt.Println("func main() {")
+	fmt.Printf("\tfile := %q\n", file)
+	fmt.Println("\tvar doc *goquery.Document")
+	fmt.Println("\tvar err error")
+	fmt.Println()
+
+	if strings.HasPrefix(file, "http:") || strings.HasPrefix(file, "https:") {
+		fmt.Println("\tresp, err := http.Get(file)")
+		fmt.Println("\tif err != nil {")
+		fmt.Println("\t\tlog.Fatal(err)")
+		fmt.Println("\t}")
+		fmt.Println("\tdefer resp.Body.Close()")
+		fmt.Println("\tdoc, err = goquery.NewDocumentFromReader(resp.Body)")
+	} else {
+		fmt.Println("\tfile, err := os.Open(file)")
+		fmt.Println("\tif err != nil {")
+		fmt.Println("\t\tlog.Fatal(err)")
+		fmt.Println("\t}")
+		fmt.Println("\tdefer file.Close()")
+		fmt.Println("\tdoc, err = goquery.NewDocumentFromReader(file)")
+	}
+
+	fmt.Println("\tif err != nil {")
+	fmt.Println("\t\tlog.Fatal(err)")
+	fmt.Println("\t}")
+	fmt.Println()
+
+	generateQueryCode("\t", "doc.Selection", query)
+
+	fmt.Println("}")
+}
+
+func generateQueryCode(indent string, selection string, query string) {
+	parts := parseParts(query)
+
+	for i, part := range parts {
+		if strings.HasPrefix(part, "Find ") {
+			selector := strings.TrimPrefix(part, "Find ")
+			selection = fmt.Sprintf("%s.Find(%q)", selection, selector)
+		} else if strings.HasPrefix(part, "Each{") {
+			subQuery := strings.TrimPrefix(part, "Each{")
+			subQuery = strings.TrimSuffix(subQuery, "}")
+			fmt.Printf("%s%s.Each(func(i int, s *goquery.Selection) {\n", indent, selection)
+			fmt.Printf("%s\tfmt.Printf(\"%%d: \", i+1)\n", indent)
+			generateQueryCode(indent+"\t", "s", subQuery)
+			fmt.Printf("%s})\n", indent)
+			return
+		} else if part == "First" {
+			selection = fmt.Sprintf("%s.First()", selection)
+		} else if part == "Last" {
+			selection = fmt.Sprintf("%s.Last()", selection)
+		} else if part == "Parent" {
+			selection = fmt.Sprintf("%s.Parent()", selection)
+		} else if part == "Children" {
+			selection = fmt.Sprintf("%s.Children()", selection)
+		} else if strings.HasPrefix(part, "Attrib ") {
+			attr := strings.TrimPrefix(part, "Attrib ")
+			fmt.Printf("%sval, exists := %s.Attr(%q)\n", indent, selection, attr)
+			fmt.Printf("%sif exists {\n", indent)
+			fmt.Printf("%s\tfmt.Println(val)\n", indent)
+			fmt.Printf("%s}\n", indent)
+			return
+		} else if part == "Text" {
+			fmt.Printf("%sfmt.Println(%s.Text())\n", indent, selection)
+			return
+		} else if part == "Html" {
+			fmt.Printf("%shtml, err := %s.Html()\n", indent, selection)
+			fmt.Printf("%sif err == nil {\n", indent)
+			fmt.Printf("%s\tfmt.Println(strings.TrimSpace(html))\n", indent)
+			fmt.Printf("%s}\n", indent)
+			return
+		} else if part == "OuterHtml" {
+			fmt.Printf("%shtml, err := goquery.OuterHtml(%s)\n", indent, selection)
+			fmt.Printf("%sif err == nil {\n", indent)
+			fmt.Printf("%s\tfmt.Println(strings.TrimSpace(html))\n", indent)
+			fmt.Printf("%s}\n", indent)
+			return
+		}
+
+		if i == len(parts)-1 {
+			fmt.Printf("%sfmt.Println(%s)\n", indent, selection)
+		}
+	}
 }
 
 // trimSpaceAndNewline from beginning and end of the string

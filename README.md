@@ -19,6 +19,15 @@ gq -file=<html_file> -query=<query>
 - `<html_file>`: Path to the HTML file you want to query or web URL
 - `<query>`: The query string to execute on the HTML file
 
+### Optional
+
+There is an optional `-gencode` flag that generate go code for the commandline query instead of fetching information from HTML:
+
+```
+gq -file=<html_file> -query=<query> -gencode
+```
+
+
 ## Query Language
 
 The query language consists of chained commands separated by the `|` character. The Each block uses `{` and `}`. The basic structure is:
