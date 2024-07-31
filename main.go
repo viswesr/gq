@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -20,15 +21,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	file, err := os.Open(*fileFlag)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	doc, err := goquery.NewDocumentFromReader(file)
-	if err != nil {
-		log.Fatal(err)
+	var doc *goquery.Document
+	if strings.HasPrefix(*fileFlag, "http:") || strings.HasPrefix(*fileFlag, "https:") {
+		resp, err := http.Get(*fileFlag)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer resp.Body.Close()
+		doc, err = goquery.NewDocumentFromReader(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		file, err := os.Open(*fileFlag)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+		doc, err = goquery.NewDocumentFromReader(file)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Parse and execute the query

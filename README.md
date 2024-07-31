@@ -16,7 +16,7 @@ go install github.com/viswesr/gq@latest
 gq -file=<html_file> -query=<query>
 ```
 
-- `<html_file>`: Path to the HTML file you want to query
+- `<html_file>`: Path to the HTML file you want to query or web URL
 - `<query>`: The query string to execute on the HTML file
 
 ## Query Language
@@ -91,14 +91,14 @@ Find <selector>|<command1>|<command2>|...
    Find form.login|Find button|Each{Attrib data-id}
    ```
 
-5. Get the href of all links within the nav element, along with their text:
+5. Get the href of all links within the nav element and print their text:
    ```
    Find nav a|Each{Attrib href|Text}
    ```
 
-6. Get the source of all iframes, along with their width and height:
+6. Get the source of all iframes:
    ```
-   Find iframe|Each{Attrib src|Attrib width|Attrib height}
+   Find iframe|Each{Attrib src}
    ```
 
 ## Contributing
