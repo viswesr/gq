@@ -9,6 +9,10 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/alecthomas/chroma/formatters"
+	"github.com/alecthomas/chroma/lexers"
+	"github.com/alecthomas/chroma/styles"
+	"github.com/yosssi/gohtml"
 )
 
 func main() {
@@ -81,22 +85,22 @@ func executeQuery(selection *goquery.Selection, query string) {
 			attr := strings.TrimPrefix(part, "Attrib ")
 			val, exists := selection.Attr(attr)
 			if exists {
-				fmt.Println(val)
+				printColourized(val, "markdown")
 			}
 			return
 		} else if part == "Text" {
-			fmt.Println(selection.Text())
+			printColourized(selection.Text(), "markdown")
 			return
 		} else if part == "Html" {
 			html, err := selection.Html()
 			if err == nil {
-				fmt.Println(trimSpaceAndNewline(html))
+				printColourized(trimSpaceAndNewline(html), "html")
 			}
 			return
 		} else if part == "OuterHtml" {
 			html, err := goquery.OuterHtml(selection)
 			if err == nil {
-				fmt.Println(trimSpaceAndNewline(html))
+				printColourized(trimSpaceAndNewline(html), "html")
 			}
 			return
 		}
@@ -238,6 +242,26 @@ func generateQueryCode(indent string, selection string, query string) {
 			fmt.Printf("%sfmt.Println(%s)\n", indent, selection)
 		}
 	}
+}
+
+// printColourized prints the text or HTML snippet with syntax highlighting
+func printColourized(h string, t string) {
+	gohtml.Condense = true
+	beautifiedHTML := gohtml.Format(h)
+	lexer := lexers.Get(t)
+	style := styles.Get("fruity")
+	formatter := formatters.Get("terminal256")
+	iterator, err := lexer.Tokenise(nil, beautifiedHTML)
+	if err != nil {
+		fmt.Println("Error tokenizing HTML:", err)
+		return
+	}
+	err = formatter.Format(os.Stdout, style, iterator)
+	if err != nil {
+		fmt.Println("Error formatting HTML:", err)
+		return
+	}
+	fmt.Println("")
 }
 
 // trimSpaceAndNewline from beginning and end of the string
