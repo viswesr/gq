@@ -1,6 +1,6 @@
 # gq
 
-`gq` is a command-line tool for querying HTML files using [goquery](https://github.com/PuerkitoBio/goquery), a Go implementation of jQuery. This tool allows you to extract specific information from HTML documents using CSS selectors combined with custom chained commands. The primary purpose of gq is to serve as an experimental platform for exploring and showcasing the capabilities of [goquery](https://github.com/PuerkitoBio/goquery) in practical applications.
+`gq` is a command-line tool that uses [goquery](https://github.com/PuerkitoBio/goquery) (A Go's jQuery implementation) to query and extract data from HTML files using CSS selectors and chained commands. It serves as an experimental platform for goquery capabilities.
 
 ## Installation
 
