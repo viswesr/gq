@@ -109,6 +109,87 @@ Find <selector>|<command1>|<command2>|...
    ```
    Find iframe|Each{Attrib src}
    ```
+### Queries using sample.html
+
+1. Extract the main title:
+```
+gq -file=sample.html -query="Find #main-title|Text"
+```
+
+2. List all navigation links:
+```
+gq -file=sample.html -query="Find nav ul li a|Each{Attrib href}"
+```
+
+3. Extract all book titles:
+```
+gq -file=sample.html -query="Find .book h3|Each{Text}"
+```
+
+4. Get the title and author of each book (using two separate queries):
+For titles:
+```
+gq -file=sample.html -query="Find .book h3|Each{Text}"
+```
+For authors:
+```
+gq -file=sample.html -query="Find .book .author|Each{Text}"
+```
+
+5. List all genres for all books (using two levels of Each):
+```
+gq -file=sample.html -query="Find .book|Each{Find .genres li|Each{Text}}"
+```
+
+6. Get the HTML content of each book in the Fiction section:
+```
+gq -file=sample.html -query="Find #fiction .book|Each{OuterHtml}"
+```
+
+7. Extract the HTML content of the Non-Fiction section:
+```
+gq -file=sample.html -query="Find #non-fiction|OuterHtml"
+```
+
+8. Get the titles and prices of books (using two separate queries):
+For titles:
+```
+gq -file=sample.html -query="Find .book h3|Each{Text}"
+```
+For prices:
+```
+gq -file=sample.html -query="Find .book .price|Each{Text}"
+```
+
+9. List all section IDs:
+```
+gq -file=sample.html -query="Find main section|Each{Attrib id}"
+```
+
+10. Extract the footer content:
+```
+gq -file=sample.html -query="Find footer|Text"
+```
+
+11. Get the headings of each section and count of books:
+```
+gq -file=sample.html -query="Find main section|Each{Find h2|Text}"
+```
+And separately:
+
+```
+gq -file=sample.html -query="Find main section|Each{Find .book-list|Children}"
+```
+
+12. Extract all book information as HTML:
+```
+gq -file=sample.html -query="Find .book|Each{OuterHtml}"
+```
+
+13. Get the text content of all paragraphs in the document:
+```
+gq -file=sample.html -query="Find p|Each{Text}"
+```
 
 ## Contributing
 
