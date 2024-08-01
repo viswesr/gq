@@ -27,8 +27,8 @@ func main() {
 	}
 
 	if *fileFlag == "" || *queryFlag == "" {
-		fmt.Println("Usage: gq -file=<html_file> -query=<query eg:Find a|Each{Attrib href}>")
-		os.Exit(1)
+		fmt.Println("Usage: gq -file=<html_file> -query=<query eg:Find a|Each{Attrib href}>\n\nThere is an optional `-gencode` flag that generates `go` code for query:\n\ngq -file=<html_file> -query=<query> -gencode")
+		os.Exit(0)
 	}
 
 	var doc *goquery.Document

@@ -21,7 +21,7 @@ gq -file=<html_file> -query=<query>
 
 ### Optional
 
-There is an optional `-gencode` flag that generate go code for the commandline query instead of fetching information from HTML:
+There is an optional `-gencode` flag that generates `go` code for the commandline query instead of fetching information from HTML:
 
 ```
 gq -file=<html_file> -query=<query> -gencode
@@ -109,6 +109,7 @@ Find <selector>|<command1>|<command2>|...
    ```
    Find iframe|Each{Attrib src}
    ```
+
 ### Queries using sample.html
 
 1. Extract the main title:
