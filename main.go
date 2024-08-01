@@ -146,105 +146,113 @@ func parseParts(query string) []string {
 }
 
 func generateGoCode(file, query string) {
-	fmt.Println("package main")
-	fmt.Println()
-	fmt.Println("import (")
-	fmt.Println("\t\"fmt\"")
-	fmt.Println("\t\"log\"")
-	if strings.HasPrefix(file, "http:") || strings.HasPrefix(file, "https:") {
-		fmt.Println("\t\"net/http\"")
-	} else {
-		fmt.Println("\t\"os\"")
+	isHTTP := strings.HasPrefix(file, "http:") || strings.HasPrefix(file, "https:")
+	importPackage := "os"
+	if isHTTP {
+		importPackage = "net/http"
 	}
-	fmt.Println("\t\"github.com/PuerkitoBio/goquery\"")
-	fmt.Println(")")
-	fmt.Println()
-	fmt.Println("func main() {")
-	fmt.Printf("\tfile := %q\n", file)
-	fmt.Println("\tvar doc *goquery.Document")
-	fmt.Println("\tvar err error")
-	fmt.Println()
+	code := fmt.Sprintf(`package main
 
-	if strings.HasPrefix(file, "http:") || strings.HasPrefix(file, "https:") {
-		fmt.Println("\tresp, err := http.Get(file)")
-		fmt.Println("\tif err != nil {")
-		fmt.Println("\t\tlog.Fatal(err)")
-		fmt.Println("\t}")
-		fmt.Println("\tdefer resp.Body.Close()")
-		fmt.Println("\tdoc, err = goquery.NewDocumentFromReader(resp.Body)")
+import (
+	"fmt"
+	"log"
+	%q
+	"github.com/PuerkitoBio/goquery"
+)
+
+func main() {
+	file := %q
+	var doc *goquery.Document
+	var err error
+
+`, importPackage, file)
+
+	if isHTTP {
+		code += `	resp, err := http.Get(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	doc, err = goquery.NewDocumentFromReader(resp.Body)
+`
 	} else {
-		fmt.Println("\tfile, err := os.Open(file)")
-		fmt.Println("\tif err != nil {")
-		fmt.Println("\t\tlog.Fatal(err)")
-		fmt.Println("\t}")
-		fmt.Println("\tdefer file.Close()")
-		fmt.Println("\tdoc, err = goquery.NewDocumentFromReader(file)")
+		code += `	file, err := os.Open(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	doc, err = goquery.NewDocumentFromReader(file)
+`
 	}
 
-	fmt.Println("\tif err != nil {")
-	fmt.Println("\t\tlog.Fatal(err)")
-	fmt.Println("\t}")
-	fmt.Println()
+	code += `	if err != nil {
+		log.Fatal(err)
+	}
 
-	generateQueryCode("\t", "doc.Selection", query)
-
-	fmt.Println("}")
+`
+	code += generateQueryCode("\t", "doc.Selection", query)
+	code += "}"
+	printColourized(code, "go")
 }
 
-func generateQueryCode(indent string, selection string, query string) {
+func generateQueryCode(indent string, selection string, query string) string {
+	var code strings.Builder
 	parts := parseParts(query)
 
 	for i, part := range parts {
-		if strings.HasPrefix(part, "Find ") {
+		switch {
+		case strings.HasPrefix(part, "Find "):
 			selector := strings.TrimPrefix(part, "Find ")
 			selection = fmt.Sprintf("%s.Find(%q)", selection, selector)
-		} else if strings.HasPrefix(part, "Each{") {
+		case strings.HasPrefix(part, "Each{"):
 			subQuery := strings.TrimPrefix(part, "Each{")
 			subQuery = strings.TrimSuffix(subQuery, "}")
-			fmt.Printf("%s%s.Each(func(i int, s *goquery.Selection) {\n", indent, selection)
-			fmt.Printf("%s\tfmt.Printf(\"%%d: \", i+1)\n", indent)
-			generateQueryCode(indent+"\t", "s", subQuery)
-			fmt.Printf("%s})\n", indent)
-			return
-		} else if part == "First" {
+			code.WriteString(fmt.Sprintf("%s%s.Each(func(i int, s *goquery.Selection) {\n", indent, selection))
+			code.WriteString(fmt.Sprintf("%s\tfmt.Printf(\"%%d: \", i+1)\n", indent))
+			code.WriteString(generateQueryCode(indent+"\t", "s", subQuery))
+			code.WriteString(fmt.Sprintf("%s})\n", indent))
+			return code.String()
+		case part == "First":
 			selection = fmt.Sprintf("%s.First()", selection)
-		} else if part == "Last" {
+		case part == "Last":
 			selection = fmt.Sprintf("%s.Last()", selection)
-		} else if part == "Parent" {
+		case part == "Parent":
 			selection = fmt.Sprintf("%s.Parent()", selection)
-		} else if part == "Children" {
+		case part == "Children":
 			selection = fmt.Sprintf("%s.Children()", selection)
-		} else if strings.HasPrefix(part, "Attrib ") {
+		case strings.HasPrefix(part, "Attrib "):
 			attr := strings.TrimPrefix(part, "Attrib ")
-			fmt.Printf("%sval, exists := %s.Attr(%q)\n", indent, selection, attr)
-			fmt.Printf("%sif exists {\n", indent)
-			fmt.Printf("%s\tfmt.Println(val)\n", indent)
-			fmt.Printf("%s}\n", indent)
-			return
-		} else if part == "Text" {
-			fmt.Printf("%sfmt.Println(%s.Text())\n", indent, selection)
-			return
-		} else if part == "Html" {
-			fmt.Printf("%shtml, err := %s.Html()\n", indent, selection)
-			fmt.Printf("%sif err == nil {\n", indent)
-			fmt.Printf("%s\tfmt.Println(strings.TrimSpace(html))\n", indent)
-			fmt.Printf("%s}\n", indent)
-			return
-		} else if part == "OuterHtml" {
-			fmt.Printf("%shtml, err := goquery.OuterHtml(%s)\n", indent, selection)
-			fmt.Printf("%sif err == nil {\n", indent)
-			fmt.Printf("%s\tfmt.Println(strings.TrimSpace(html))\n", indent)
-			fmt.Printf("%s}\n", indent)
-			return
+			code.WriteString(fmt.Sprintf("%sval, exists := %s.Attr(%q)\n", indent, selection, attr))
+			code.WriteString(fmt.Sprintf("%sif exists {\n", indent))
+			code.WriteString(fmt.Sprintf("%s\tfmt.Println(val)\n", indent))
+			code.WriteString(fmt.Sprintf("%s}\n", indent))
+			return code.String()
+		case part == "Text":
+			code.WriteString(fmt.Sprintf("%sfmt.Println(%s.Text())\n", indent, selection))
+			return code.String()
+		case part == "Html":
+			code.WriteString(fmt.Sprintf("%shtml, err := %s.Html()\n", indent, selection))
+			code.WriteString(fmt.Sprintf("%sif err == nil {\n", indent))
+			code.WriteString(fmt.Sprintf("%s\tfmt.Println(strings.TrimSpace(html))\n", indent))
+			code.WriteString(fmt.Sprintf("%s}\n", indent))
+			return code.String()
+		case part == "OuterHtml":
+			code.WriteString(fmt.Sprintf("%shtml, err := goquery.OuterHtml(%s)\n", indent, selection))
+			code.WriteString(fmt.Sprintf("%sif err == nil {\n", indent))
+			code.WriteString(fmt.Sprintf("%s\tfmt.Println(strings.TrimSpace(html))\n", indent))
+			code.WriteString(fmt.Sprintf("%s}\n", indent))
+			return code.String()
 		}
 
 		if i == len(parts)-1 {
-			fmt.Printf("%sfmt.Println(%s)\n", indent, selection)
+			code.WriteString(fmt.Sprintf("%sfmt.Println(%s)\n", indent, selection))
 		}
 	}
+
+	return code.String()
 }
 
-// printColourized prints the text or HTML snippet with syntax highlighting
+// printColourized prints the text or HTML or Go snippet with syntax highlighting
 func printColourized(h string, t string) {
 	gohtml.Condense = true
 	beautifiedHTML := gohtml.Format(h)
