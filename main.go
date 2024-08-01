@@ -161,14 +161,14 @@ import (
 )
 
 func main() {
-	file := %q
+	fileName := %q
 	var doc *goquery.Document
 	var err error
 
 `, importPackage, file)
 
 	if isHTTP {
-		code += `	resp, err := http.Get(file)
+		code += `	resp, err := http.Get(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -190,7 +190,7 @@ func main() {
 	}
 
 `
-	code += generateQueryCode("\t", "doc.Selection", query)
+	code += generateQueryCode("\t", "doc", query)
 	code += "}"
 	printColourized(code, "go")
 }
