@@ -17,6 +17,7 @@ import (
 
 func main() {
 	fileFlag := flag.String("file", "", "HTML file to parse")
+	urlFlag := flag.String("url", "", "HTML URL to download and parse")
 	queryFlag := flag.String("query", "", "Query to execute")
 	codeGenFlag := flag.Bool("gencode", false, "Generate Go code snippet for the query")
 	flag.Parse()
@@ -26,10 +27,15 @@ func main() {
 		return
 	}
 
-	if *fileFlag == "" || *queryFlag == "" {
-		fmt.Println("Usage: gq -file=<html_file> -query=<query eg:Find a|Each{Attrib href}>\n\nThere is an optional `-gencode` flag that generates `go` code for query:\n\ngq -file=<html_file> -query=<query> -gencode")
+	if (*fileFlag == "" && *urlFlag == "") || *queryFlag == "" {
+		fmt.Println("Usage:\n gq -file=<html_file> -query=<query eg:Find a|Each{Attrib href}> or\n gq -url=<html_url> -query=<query eg:Find a|Each{Attrib href}>\nThere is an optional `-gencode` flag that generates `go` code for query:\n gq -file=<html_file> -query=<query> -gencode")
+		os.Exit(0)
+	} else if *fileFlag != "" && *urlFlag != "" {
+		fmt.Println("Please provide either a -file or -url, not both")
 		os.Exit(0)
 	}
+
+	*fileFlag = *urlFlag
 
 	var doc *goquery.Document
 	if strings.HasPrefix(*fileFlag, "http:") || strings.HasPrefix(*fileFlag, "https:") {
