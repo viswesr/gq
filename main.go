@@ -22,11 +22,6 @@ func main() {
 	codeGenFlag := flag.Bool("gencode", false, "Generate Go code snippet for the query")
 	flag.Parse()
 
-	if *codeGenFlag {
-		generateGoCode(*fileFlag, *queryFlag)
-		return
-	}
-
 	if (*fileFlag == "" && *urlFlag == "") || *queryFlag == "" {
 		fmt.Println("Usage:\n gq -file=<html_file> -query=<query eg:Find a|Each{Attrib href}> or\n gq -url=<html_url> -query=<query eg:Find a|Each{Attrib href}>\nThere is an optional `-gencode` flag that generates `go` code for query:\n gq -file=<html_file> -query=<query> -gencode")
 		os.Exit(0)
@@ -36,6 +31,11 @@ func main() {
 	}
 
 	*fileFlag = *urlFlag
+
+	if *codeGenFlag {
+		generateGoCode(*fileFlag, *queryFlag)
+		return
+	}
 
 	var doc *goquery.Document
 	if strings.HasPrefix(*fileFlag, "http:") || strings.HasPrefix(*fileFlag, "https:") {
