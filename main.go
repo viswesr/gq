@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -30,7 +31,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	*fileFlag = *urlFlag
+	if *urlFlag != "" {
+		*fileFlag = *urlFlag
+	}
 
 	if *codeGenFlag {
 		generateGoCode(*fileFlag, *queryFlag)
@@ -94,6 +97,12 @@ func executeQuery(selection *goquery.Selection, query string) {
 				printColourized(val, "markdown")
 			}
 			return
+		} else if strings.HasPrefix(part, "Eq ") {
+			indexStr := strings.TrimPrefix(part, "Eq ")
+			index, err := strconv.Atoi(indexStr)
+			if err == nil {
+				selection = selection.Eq(index)
+			}
 		} else if part == "Text" {
 			printColourized(selection.Text(), "markdown")
 			return
@@ -182,7 +191,7 @@ func main() {
 	doc, err = goquery.NewDocumentFromReader(resp.Body)
 `
 	} else {
-		code += `	file, err := os.Open(file)
+		code += `	file, err := os.Open(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -233,6 +242,9 @@ func generateQueryCode(indent string, selection string, query string) string {
 			code.WriteString(fmt.Sprintf("%s\tfmt.Println(val)\n", indent))
 			code.WriteString(fmt.Sprintf("%s}\n", indent))
 			return code.String()
+		case strings.HasPrefix(part, "Eq "):
+			index := strings.TrimPrefix(part, "Eq ")
+			selection = fmt.Sprintf("%s.Eq(%s)", selection, index)
 		case part == "Text":
 			code.WriteString(fmt.Sprintf("%sfmt.Println(%s.Text())\n", indent, selection))
 			return code.String()
