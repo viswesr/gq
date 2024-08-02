@@ -47,6 +47,7 @@ Find <selector>|<command1>|<command2>|...
 - `Each{<subquery>}`: Execute a subquery for each selected element
 - `First`: Select only the first element of the current selection
 - `Last`: Select only the last element of the current selection
+- `Eq <index>`: Select the element at specified index of the current selection
 - `Parent`: Select the parent element of the current selection
 - `Children`: Select the children elements of the current selection
 - `Attrib <attribute>`: Get the value of the specified attribute
