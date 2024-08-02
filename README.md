@@ -13,11 +13,14 @@ go install github.com/viswesr/gq@latest
 ## Usage
 
 ```
-gq -file=<html_file> -query=<query> or
+gq -file=<html_file> -query=<query>
+```
+or
+```
 gq -url=<web_url> -query=<query>
 ```
 
-- `<html_file>`: Path to the HTML file you want to query or web URL
+- `<html_file>`: Path to the HTML file you wish to query.
 - `<web_url>`: Webpage URL
 - `<query>`: The query string to execute on the HTML file
 
